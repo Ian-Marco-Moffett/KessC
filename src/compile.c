@@ -1,5 +1,6 @@
 #include <compile.h>
 #include <err.h>
+#include <flags.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -186,11 +187,19 @@ void compile_init(void) {
 
 
 void compile_end(void) {
+  extern COMPILE_FLAGS compile_flags;
+
   epilogue();
-
   fclose(out);
-  pid_t child = fork();
 
+  if (compile_flags & CF_ASMONLY) {
+    char cmd[300];
+    snprintf(cmd, sizeof(cmd), "mv %s ./", out_name);
+    system(cmd);
+    return;
+  }
+
+  pid_t child = fork();
   if (child != 0) {
     execl(GCC_PATH, GCC_PATH, out_name, "-oa.out", NULL);
   } else {

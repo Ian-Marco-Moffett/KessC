@@ -2,12 +2,15 @@
 #include <stdlib.h>
 #include <parser.h>
 #include <ast.h>
+#include <flags.h>
 
 #ifndef linux
 #error // Linux only for now.
 #endif
 
 FILE* input = NULL;
+
+COMPILE_FLAGS compile_flags = 0;
 
 static void run(void) {
   parse();
@@ -26,6 +29,17 @@ int main(int argc, char** argv) {
   }
   
   for (int i = 1; i < argc; ++i) {
+    if (argv[i][0] == '-') {
+      switch (argv[i][1]) {
+        case 's':
+          // Output only asm.
+          compile_flags |= CF_ASMONLY;
+          break;
+      }
+
+      continue;
+    }
+
     input = fopen(argv[i], "r");
 
     if (input == NULL) {
