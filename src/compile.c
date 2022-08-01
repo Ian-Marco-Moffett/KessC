@@ -14,10 +14,10 @@
 #define PATH_RAND (rand() % (PATH_HIGHEST_ASCII_VAL - PATH_LOWEST_ASCII_VAL + 1)) + PATH_LOWEST_ASCII_VAL
 #define MAX_USED_REGS 4
 
-typedef int8_t REG;
 static FILE* out = NULL;
 static char* regs[MAX_USED_REGS] = {"%r8", "%r9", "%r10", "%r11"};
 static uint8_t reg_bitmap = 0b1111;
+static char out_name[150];
 
 // Returns -1 if no regs are found.
 static REG alloc_reg(void) {
@@ -29,6 +29,11 @@ static REG alloc_reg(void) {
   }
 
   return -1;
+}
+
+
+void freeall_regs(void) {
+  reg_bitmap = 0b1111;
 }
 
 
@@ -52,7 +57,7 @@ static REG rload(uint64_t value) {
 }
 
 
-static void check_regs(REG r1, REG r2) {
+void check_regs(REG r1, REG r2) {
   if (r1 < 0 || r2 < 0) {
     printf(ERR "Ran out of registers.");
     exit(1);
@@ -99,7 +104,7 @@ static REG rdiv(REG r1, REG r2) {
 }
 
 
-static void rprint(REG r) {
+void rprint(REG r) {
   check_regs(r, 0);
   fprintf(out, "\tmovq\t%s, %%rdi\n", regs[r]);
   fprintf(out, "\tcall\tprintint\n");
@@ -144,15 +149,15 @@ static void epilogue(void) {
 }
 
 
-AST_OP interpretAST(struct ASTNode* node) {
+REG mkAST(struct ASTNode* node) {
   uint64_t leftreg, rightreg;
 
   if (node->left) {
-    leftreg = interpretAST(node->left);
+    leftreg = mkAST(node->left);
   }
 
   if (node->right) {
-    rightreg = interpretAST(node->right);
+    rightreg = mkAST(node->right);
   }
 
   switch (node->op) {
@@ -169,19 +174,18 @@ AST_OP interpretAST(struct ASTNode* node) {
   }
 }
 
-void compile(struct ASTNode* tree) {
+void compile_init(void) {
   srand(time(NULL));
 
   // Randomize the path.
-  char out_name[150];
   snprintf(out_name, sizeof(out_name), "/tmp/kesscc-%c%c%c%c%c.out.s", PATH_RAND, PATH_RAND, PATH_RAND, PATH_RAND, PATH_RAND);
   out = fopen(out_name, "a");
 
-  prologue();
+  prologue(); 
+}
 
-  REG r = interpretAST(tree);
-  rprint(r);
-    
+
+void compile_end(void) {
   epilogue();
 
   fclose(out);

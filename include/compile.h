@@ -3,8 +3,13 @@
 
 #include <ast.h>
 
+typedef int8_t REG;
 
-AST_OP interpretAST(struct ASTNode* node);
-void compile(struct ASTNode* tree);
+REG mkAST(struct ASTNode* tree);
+void compile_init(void);
+void compile_end(void);
+void check_regs(REG r1, REG r2);
+void rprint(REG r);
+void freeall_regs(void);
 
 #endif

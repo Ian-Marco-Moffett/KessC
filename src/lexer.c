@@ -5,8 +5,12 @@
 #include <ctype.h>
 #include <stdlib.h>
 
+#define IDENT_MAX_LEN 255
+
+
 extern FILE* input;
 static uint64_t line_num = 1;
+static char idbuf[IDENT_MAX_LEN];
 
 // Return the position of character c
 // in string s, or -1 if c not found
@@ -46,6 +50,36 @@ static int scanint(char c) {
 }
 
 
+static uint16_t scanid(char c, char* buf) {
+  uint16_t i = 0;
+  while (isalpha(c) || isdigit(c) || c == '_') {
+    if (i >= IDENT_MAX_LEN - 1) {
+      printf(ERR "Identifier too long near line %d (why the in holy moly heck do you need that many characters???? O_O)\n", line_num);
+      fclose(input);
+      exit(1);
+    }
+
+    buf[i++] = c;
+    c = next();
+  }
+
+  putback();
+  buf[i] = '\0';
+  return i;
+}
+
+
+/*
+ *  @param what   Possible keyword.
+ *
+ */
+static TOKEN_TYPE keyword(const char* what) {
+  if (strcmp(what, "out") == 0) {
+    return TT_OUT;
+  }
+}
+
+
 static char skip(void) {
   char c = next();
 
@@ -77,6 +111,18 @@ uint8_t scan(struct Token* tok) {
       tok->type = TT_SLASH;
       tok->ch = '/';
       break;
+    case '(':
+      tok->type = TT_LPAREN;
+      tok->ch = '(';
+      break;
+    case ')':
+      tok->type = TT_RPAREN;
+      tok->ch = ')';
+      break;
+    case ';':
+      tok->type = TT_SEMI;
+      tok->ch = ';';
+      break;
     case EOF:
       tok->type = TT_EOF;
       tok->ch = '\0';
@@ -85,10 +131,24 @@ uint8_t scan(struct Token* tok) {
       if (isdigit(cur)) {
         tok->intval = scanint(cur);
         tok->type = TT_INTLIT;
-        break;
+        return 1;
       }
 
-      printf(ERR "Invalid character on line %d ('%c')\n", line_num, cur);
+      if (isalpha(cur) || cur == '_') {
+        scanid(cur, idbuf);
+
+        switch (keyword(idbuf)) {
+          case TT_OUT:
+            tok->type = TT_OUT;
+            return 1;
+          default:
+            printf(ERR "Invalid keyword or identifier on line %d\n", line_num);
+            fclose(input);
+            exit(1);
+        }
+      }
+
+      printf(ERR "Invalid token on line %d ('%c')\n", line_num, cur);
       fclose(input);
       exit(1);
     }
