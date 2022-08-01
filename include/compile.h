@@ -5,6 +5,6 @@
 
 
 AST_OP interpretAST(struct ASTNode* node);
-void compile(void);
+void compile(struct ASTNode* tree);
 
 #endif

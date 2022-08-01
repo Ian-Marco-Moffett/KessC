@@ -44,5 +44,5 @@ struct ASTNode* binexpr(void) {
 void parse(void) {
   scan(&cur_token);
   struct ASTNode* n = binexpr();
-  compile();
+  compile(n);
 }
