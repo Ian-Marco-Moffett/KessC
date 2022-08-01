@@ -3,4 +3,6 @@
 
 #define ERR "\e[0;31mKessCC: "
 
+void panic(void);
+
 #endif

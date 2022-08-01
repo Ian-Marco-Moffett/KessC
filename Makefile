@@ -5,6 +5,7 @@ CFLAGS = -Werror=implicit     \
         -Werror=int-conversion \
         -Werror=incompatible-pointer-types \
         -Werror=int-to-pointer-cast        \
+        -fsanitize=address
 
 .PHONY: all
 all: $(CFILES)

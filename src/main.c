@@ -1,13 +1,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <parser.h>
+#include <ast.h>
 
 FILE* input = NULL;
 
 static void run(void) {
   parse();
+  ast_destroy();
 }
 
+void panic(void) {
+  fclose(input);
+  exit(1);
+}
 
 int main(int argc, char** argv) {
   if (argc < 2) {

@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 typedef enum {
+  TT_EOF,
   TT_PLUS,
   TT_MINUS,
   TT_STAR,
@@ -15,6 +16,7 @@ typedef enum {
 struct Token {
   TOKEN_TYPE type;
   uint64_t intval;
+  char ch;
 };
 
 

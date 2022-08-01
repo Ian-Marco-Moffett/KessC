@@ -17,6 +17,11 @@ static int chrpos(char* s, int c) {
   return (p ? p - s : -1);
 }
 
+
+static void putback(void) {
+  fseek(input, ftell(input) - 1, SEEK_SET);
+}
+
 static char next(void) {
   char c = fgetc(input);
 
@@ -27,11 +32,7 @@ static char next(void) {
   return c;
 }
 
-static void putback(void) {
-  fseek(input, ftell(input) - 1, SEEK_SET);
-}
-
-static int scanint(int c) {
+static int scanint(char c) {
   int k, val = 0;
 
   while ((k = chrpos("0123456789", c)) >= 0) {
@@ -59,31 +60,43 @@ static char skip(void) {
 uint8_t scan(struct Token* tok) {
   char cur = skip();
 
-  switch (cur) {
-    case EOF:
-      return 0;
+  switch (cur) { 
     case '+':
       tok->type = TT_PLUS;
+      tok->ch = '+';
       break;
     case '-':
       tok->type = TT_MINUS;
+      tok->ch = '-';
       break;
     case '*':
       tok->type = TT_STAR;
+      tok->ch = '*';
       break;
     case '/':
       tok->type = TT_SLASH;
+      tok->ch = '/';
       break;
+    case EOF:
+      tok->type = TT_EOF;
+      tok->ch = '\0';
+      return 0;
     default:
       if (isdigit(cur)) {
-        tok->intval = TT_INTLIT;
+        tok->intval = scanint(cur);
+        tok->type = TT_INTLIT;
         break;
       }
 
-      printf(ERR "Invalid character on line %d\n", line_num);
+      printf(ERR "Invalid character on line %d ('%c')\n", line_num, cur);
       fclose(input);
       exit(1);
     }
 
   return 1;
+}
+
+
+uint64_t get_line_num(void) {
+  return line_num;
 }

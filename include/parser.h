@@ -3,5 +3,6 @@
 
 
 void parse(void);
+void ast_destroy(void);
 
 #endif

@@ -2,6 +2,7 @@
 #define AST_H
 
 #include <stdint.h>
+#include <token.h>
 
 typedef enum {
   AST_ADD,
@@ -23,5 +24,7 @@ struct ASTNode {
 struct ASTNode* mkastnode(AST_OP op, struct ASTNode* left, struct ASTNode* right, uint64_t intval);
 struct ASTNode* mkastleaf(AST_OP op, int intval);
 struct ASTNode* mkastunary(AST_OP op, struct ASTNode* left, int intval);
+AST_OP arithop(TOKEN_TYPE tok_type);
+void ast_destroy(void);
 
 #endif
