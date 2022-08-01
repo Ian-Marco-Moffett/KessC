@@ -10,4 +10,4 @@ CFLAGS = -Werror=implicit     \
 .PHONY: all
 all: $(CFILES)
 	@ mkdir -p bin
-	gcc $(CFLAGS) -Iinclude $^ -o bin/main
+	gcc $(CFLAGS) -Iinclude $^ -o bin/kesscc
