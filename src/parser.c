@@ -1,12 +1,12 @@
 #include <lexer.h>
 #include <ast.h>
 #include <err.h>
+#include <compile.h>
 #include <stdio.h>
 
 static struct Token cur_token;
 
 static struct ASTNode* primary(void) {
-
   struct ASTNode* n; 
 
   switch (cur_token.type) {
@@ -40,7 +40,9 @@ struct ASTNode* binexpr(void) {
   return n;
 }
 
+
 void parse(void) {
   scan(&cur_token);
   struct ASTNode* n = binexpr();
+  compile();
 }

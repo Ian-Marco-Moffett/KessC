@@ -3,6 +3,10 @@
 #include <parser.h>
 #include <ast.h>
 
+#ifndef linux
+#error // Linux only for now.
+#endif
+
 FILE* input = NULL;
 
 static void run(void) {
