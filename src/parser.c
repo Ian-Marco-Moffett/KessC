@@ -14,10 +14,8 @@ static struct ASTNode* primary(void) {
       n = mkastleaf(AST_INTLIT, cur_token.intval);
       scan(&cur_token);
       return n;
-    case TT_EOF:
-      return NULL;
     default:
-      printf(ERR "Syntax error on line %d near '%c'\n", get_line_num(), cur_token.ch);
+      printf(ERR "Syntax error near line %d\n", get_line_num() - 1);
       panic();
   }
 }
