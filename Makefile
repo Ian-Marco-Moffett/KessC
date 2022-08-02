@@ -6,8 +6,13 @@ CFLAGS = -Werror=implicit     \
         -Werror=incompatible-pointer-types \
         -Werror=int-to-pointer-cast        \
         -fsanitize=address
+INCLUDES = -I$(SRCDIR)/include
+SRCDIR = $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
+VPATH := $(VPATH) $(SRCDIR)
+BUILDDIR := $(PWD)/bin
 
 .PHONY: all
 all: $(CFILES)
-	@ mkdir -p bin
-	gcc $(CFLAGS) -Iinclude $^ -o bin/kesscc
+	@ mkdir -p $(BUILDDIR)
+	echo [CC] $^ - $@
+	$(CC) $(CFLAGS) $(INCLUDES) $^ -o $(BUILDDIR)/kesscc

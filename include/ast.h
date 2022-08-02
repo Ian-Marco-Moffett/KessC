@@ -5,7 +5,8 @@
 #include <token.h>
 
 typedef enum {
-  AST_ADD,
+  AST_NONE = -1,
+  AST_ADD = 0,
   AST_SUB,
   AST_MUL,
   AST_DIV,

@@ -9,7 +9,7 @@ static uint64_t nodes_idx = 0;
 
 struct ASTNode* mkastnode(AST_OP op, struct ASTNode* left, struct ASTNode* mid, struct ASTNode* right, uint64_t intval) {
   if (nodes == NULL) {
-    nodes = malloc(sizeof(struct ASTNode*));
+    nodes = (struct ASTNode**) malloc(sizeof(struct ASTNode*));
     if (nodes == NULL) {
       fclose(input);
       printf(ERR "__INTERNAL_ERR__ [Unable to malloc() node list in %s]\n", __FILE__);
@@ -17,7 +17,7 @@ struct ASTNode* mkastnode(AST_OP op, struct ASTNode* left, struct ASTNode* mid, 
     }
   }
 
-  struct ASTNode* n = malloc(sizeof(struct ASTNode));
+  struct ASTNode* n = (struct ASTNode*)  malloc(sizeof(struct ASTNode));
 
   if (n == NULL) {
       fclose(input);
@@ -31,7 +31,7 @@ struct ASTNode* mkastnode(AST_OP op, struct ASTNode* left, struct ASTNode* mid, 
   n->intval = intval;
   n->mid = mid;
 
-  nodes = realloc(nodes, sizeof(struct ASTNode*) * (nodes_idx + 2));
+  nodes = (struct ASTNode**) realloc(nodes, sizeof(struct ASTNode*) * (nodes_idx + 2));
   
   if (nodes == NULL) {
       fclose(input);
@@ -87,5 +87,7 @@ AST_OP arithop(TOKEN_TYPE tok_type) {
       return AST_LE;
     case TT_GE:
       return AST_GT;
+    default:
+      return AST_NONE;
   }
 }

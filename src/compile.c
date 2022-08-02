@@ -18,8 +18,8 @@
 
 extern struct SymbolTable globsyms[MAX_SYMBOLS];
 static FILE* out = NULL;
-static char* regs[MAX_USED_REGS] = {"%r8", "%r9", "%r10", "%r11"};
-static char* bregs[MAX_USED_REGS] = {"%r8b", "%r9b", "%r10b", "%r11b"};
+static const char* regs[MAX_USED_REGS] = {"%r8", "%r9", "%r10", "%r11"};
+static const char* bregs[MAX_USED_REGS] = {"%r8b", "%r9b", "%r10b", "%r11b"};
 static uint8_t reg_bitmap = 0b1111;
 static char out_name[150];
 
@@ -211,8 +211,8 @@ static uint64_t alloc_label(void) {
 
 REG mkAST(struct ASTNode* tree, REG r, AST_OP parent_op);
 
-static char *cmplist[] = {"sete", "setne", "setl", "setg", "setle", "setge"};
-static char *invcmplist[] = {"jne", "je", "jge", "jle", "jg", "jl"};
+static const char *cmplist[] = {"sete", "setne", "setl", "setg", "setle", "setge"};
+static const char *invcmplist[] = {"jne", "je", "jge", "jle", "jg", "jl"};
 
 REG rcmpnset(AST_OP op, REG r1, REG r2) {
   if (op < AST_EQ || op > AST_GE) {
@@ -357,6 +357,8 @@ REG mkAST(struct ASTNode* node, REG r, AST_OP parent_op) {
     case AST_OUT:
       rprintint(leftreg);
       freeall_regs();
+      return -1;
+    default:
       return -1;
   }
 }

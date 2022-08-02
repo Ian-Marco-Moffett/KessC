@@ -38,8 +38,9 @@ static char next(void) {
 
 static int scanint(char c) {
   int k, val = 0;
+  char numbers[] = "0123456789";
 
-  while ((k = chrpos("0123456789", c)) >= 0) {
+  while ((k = chrpos(numbers, c)) >= 0) {
     val = val * 10 + k;
     c = next();
   }
@@ -84,6 +85,8 @@ static TOKEN_TYPE keyword(const char* what) {
     return TT_ELSE;
   } else if (strcmp(what, "while") == 0) {
     return TT_WHILE;
+  } else {
+    return (TOKEN_TYPE)-1;
   }
 }
 
@@ -173,7 +176,7 @@ uint8_t scan(struct Token* tok) {
         fclose(input);
         exit(1);
       }
-    case EOF:
+    case (char)EOF:
       tok->type = TT_EOF;
       tok->ch = '\0';
       return 0;

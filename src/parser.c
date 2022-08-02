@@ -38,7 +38,7 @@ static struct ASTNode* primary(void) {
 }
 
 
-static void tok_assert(TOKEN_TYPE tt, char* what) {
+static void tok_assert(TOKEN_TYPE tt, const char* what) {
   if (cur_token.type == tt) {
     scan(&cur_token);
   } else {
@@ -223,7 +223,7 @@ static struct ASTNode* statement(void) {
         tree = var_dec();
 
         if (tree != NULL) {
-          mkAST(tree, -1, 0);
+          mkAST(tree, -1, AST_ADD);
           freeall_regs();
         }
 
@@ -236,7 +236,7 @@ static struct ASTNode* statement(void) {
         break;
       case TT_ID:
         tree = assignment(0);
-        mkAST(tree, -1, 0);
+        mkAST(tree, -1, AST_ADD);
         freeall_regs();
         break;
       case TT_WHILE:
@@ -264,6 +264,6 @@ static struct ASTNode* statement(void) {
 void parse(void) {
   scan(&cur_token);
   compile_init();
-  mkAST(statement(), -1, 0);
+  mkAST(statement(), -1, AST_ADD);
   compile_end();
 }

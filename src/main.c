@@ -11,7 +11,7 @@
 
 FILE* input = NULL;
 
-COMPILE_FLAGS compile_flags = 0;
+COMPILE_FLAGS compile_flags = (COMPILE_FLAGS)0;
 
 static void run(void) {
   parse();
@@ -34,7 +34,7 @@ int main(int argc, char** argv) {
       switch (argv[i][1]) {
         case 's':
           // Output only asm.
-          compile_flags |= CF_ASMONLY;
+          compile_flags = (COMPILE_FLAGS)(compile_flags | CF_ASMONLY);
           break;
       }
 
