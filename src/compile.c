@@ -108,7 +108,7 @@ static REG rdiv(REG r1, REG r2) {
 }
 
 
-void rprint(REG r) {
+void rprintint(REG r) {
   check_regs(r, 0);
   fprintf(out, "\tmovq\t%s, %%rdi\n", regs[r]);
   fprintf(out, "\tcall\tprintint\n");
@@ -204,15 +204,105 @@ static void epilogue(void) {
 }
 
 
-REG mkAST(struct ASTNode* node, REG r) {
+static uint64_t alloc_label(void) {
+  static uint64_t id = 1;
+  return id++;
+}
+
+REG mkAST(struct ASTNode* tree, REG r, AST_OP parent_op);
+
+static char *cmplist[] = {"sete", "setne", "setl", "setg", "setle", "setge"};
+static char *invcmplist[] = {"jne", "je", "jge", "jle", "jg", "jl"};
+
+REG rcmpnset(AST_OP op, REG r1, REG r2) {
+  if (op < AST_EQ || op > AST_GE) {
+    printf(ERR "__INTERNAL_ERR__: Bad op in %s\n", __func__);
+    panic();
+  }
+
+  fprintf(out, "\tcmpq\t%s, %s\n", regs[r2], regs[r1]);
+  fprintf(out, "\t%s\t%s\n", cmplist[op - AST_EQ], bregs[r2]);
+  fprintf(out, "\tmovzbq\t%s, %s\n", bregs[r2], regs[r2]);
+  free_reg(r1);
+  return r2;
+}
+
+
+REG rcmpnjmp(AST_OP op, REG r1, REG r2, uint64_t label) {
+  if (op < AST_EQ || op > AST_GE) {
+    printf(ERR "__INTERNAL_ERR__: Bad op in %s\n", __func__);
+    panic();
+  }
+
+  fprintf(out, "\tcmpq\t%s, %s\n", regs[r2], regs[r1]);
+  fprintf(out, "\t%s\tL%d\n", invcmplist[op - AST_EQ], label);
+  freeall_regs();
+  return -1;
+}
+
+
+static void rjmp(uint64_t label) {
+  fprintf(out, "\tjmp\tL%d\n", label);
+}
+
+
+static void rlabel(uint64_t label) {
+  fprintf(out, "L%d:\n", label);
+}
+
+
+static REG mkifast(struct ASTNode* n) {
+  uint64_t false_label, end_label;
+
+  false_label = alloc_label();
+
+  if (n->right) {
+    end_label = alloc_label();
+  }
+
+  mkAST(n->left, false_label, n->op);
+  freeall_regs();
+
+  // Make true compound statement.
+  mkAST(n->mid, -1, n->op);
+  freeall_regs();
+
+  if (n->right) {
+    rjmp(end_label);
+  }
+
+  rlabel(false_label);
+
+  if (n->right) {
+    mkAST(n->right, -1, n->op);
+    freeall_regs();
+    rlabel(end_label);
+  }
+
+  return -1;
+}
+
+
+REG mkAST(struct ASTNode* node, REG r, AST_OP parent_op) {
   uint64_t leftreg, rightreg;
 
+  switch (node->op) {
+    case AST_IF:
+      return mkifast(node);
+    case AST_GLUE:
+      mkAST(node->left, -1, node->op);
+      freeall_regs();
+      mkAST(node->right, -1, node->op);
+      freeall_regs();
+      return -1;
+  }
+
   if (node->left) {
-    leftreg = mkAST(node->left, -1);
+    leftreg = mkAST(node->left, -1, node->op);
   }
 
   if (node->right) {
-    rightreg = mkAST(node->right, leftreg);
+    rightreg = mkAST(node->right, leftreg, node->op);
   }
 
   switch (node->op) {
@@ -231,17 +321,20 @@ REG mkAST(struct ASTNode* node, REG r) {
     case AST_DIV:
       return rdiv(leftreg, rightreg);
     case AST_EQ:
-      return requal(leftreg, rightreg);
     case AST_NE:
-      return rnotequal(leftreg, rightreg);
     case AST_LT:
-      return rnotequal(leftreg, rightreg);
     case AST_GT:
-      return rgreaterthan(leftreg, rightreg);
     case AST_LE:
-      return rlessequal(leftreg, rightreg);
     case AST_GE:
-      return rgreaterequal(leftreg, rightreg);
+      if (parent_op == AST_IF) {
+        return rcmpnjmp(node->op, leftreg, rightreg, r);
+      }
+
+      return rcmpnset(node->op, leftreg, rightreg);
+    case AST_OUT:
+      rprintint(leftreg);
+      freeall_regs();
+      return -1;
   }
 }
 

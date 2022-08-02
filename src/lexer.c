@@ -78,6 +78,10 @@ static TOKEN_TYPE keyword(const char* what) {
     return TT_OUT;
   } else if (strcmp(what, "u8") == 0) {
     return TT_U8;
+  } else if (strcmp(what, "if") == 0) {
+    return TT_IF;
+  } else if (strcmp(what, "else") == 0) {
+    return TT_ELSE;
   }
 }
 
@@ -100,6 +104,14 @@ uint8_t scan(struct Token* tok) {
     case '+':
       tok->type = TT_PLUS;
       tok->ch = '+';
+      break;
+    case '{':
+      tok->type = TT_LBRACE;
+      tok->ch = '{';
+      break;
+    case '}':
+      tok->type = TT_RBRACE;
+      tok->ch = '}';
       break;
     case '-':
       tok->type = TT_MINUS;
@@ -179,6 +191,12 @@ uint8_t scan(struct Token* tok) {
             return 1;
           case TT_U8:
             tok->type = TT_U8;
+            return 1;
+          case TT_IF:
+            tok->type = TT_IF;
+            return 1;
+          case TT_ELSE:
+            tok->type = TT_ELSE;
             return 1;
           default:
             // If it is not a keyword, 

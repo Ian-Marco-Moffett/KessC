@@ -1,0 +1,11 @@
+{
+  u8 somevar = 2;
+
+  u8 var1;
+  var1 = 3;
+
+  if (1 < 2) {
+    out(somevar);
+    out(var1);
+  }
+}

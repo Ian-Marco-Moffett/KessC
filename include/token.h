@@ -16,6 +16,10 @@ typedef enum {
   TT_EQUALS,
   TT_U8,
   TT_ID,
+  TT_IF,
+  TT_ELSE,
+  TT_LBRACE,
+  TT_RBRACE,
 
   // Comparison operators.
   TT_LT,

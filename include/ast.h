@@ -18,13 +18,17 @@ typedef enum {
   AST_LT,
   AST_GT,
   AST_LE,
-  AST_GE
+  AST_GE,
+  AST_GLUE,
+  AST_IF,
+  AST_OUT,
 } AST_OP;
 
 
 struct ASTNode {
   AST_OP op;
   struct ASTNode* left;
+  struct ASTNode* mid;
   struct ASTNode* right;
 
   union {
@@ -34,7 +38,7 @@ struct ASTNode {
 };
 
 
-struct ASTNode* mkastnode(AST_OP op, struct ASTNode* left, struct ASTNode* right, uint64_t intval);
+struct ASTNode* mkastnode(AST_OP op, struct ASTNode* left, struct ASTNode* mid, struct ASTNode* right, uint64_t intval);
 struct ASTNode* mkastleaf(AST_OP op, int intval);
 struct ASTNode* mkastunary(AST_OP op, struct ASTNode* left, int intval);
 AST_OP arithop(TOKEN_TYPE tok_type);

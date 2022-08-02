@@ -65,23 +65,22 @@ struct ASTNode* binexpr(void) {
   
   // Get right hand side.
   struct ASTNode* right = binexpr();
-  struct ASTNode* n = mkastnode(ntype, left, right, 0);
+  struct ASTNode* n = mkastnode(ntype, left, NULL, right, 0);
   return n;
 }
 
 
-static void out_statement(void) {
+static struct ASTNode* out_statement(void) {
   tok_assert(TT_OUT, "out");
   tok_assert(TT_LPAREN, "(");
 
   struct ASTNode* tree = binexpr();
-  REG reg = mkAST(tree, -1);
-
-  rprint(reg);
-  freeall_regs();
-
   tok_assert(TT_RPAREN, ")");
   semi();
+
+  tree = mkastunary(AST_OUT, tree, 0);
+
+  return tree;
 }
 
 
@@ -104,7 +103,7 @@ static void id(void) {
  *
  */
 
-static void assignment(uint8_t init) {
+static struct ASTNode* assignment(uint8_t init) {
   // Ensure the existance of an identifier if not init.
 
   if (!(init)) {
@@ -124,14 +123,13 @@ static void assignment(uint8_t init) {
   // Parse the expression.
   struct ASTNode* left = binexpr();
 
-  struct ASTNode* tree = mkastnode(AST_ASSIGN, left, right, 0);
-  mkAST(tree, -1);
-  freeall_regs();
+  struct ASTNode* tree = mkastnode(AST_ASSIGN, left, NULL, right, 0); 
   semi();
+  return tree;
 }
 
 
-static void var_dec() {
+static struct ASTNode* var_dec() {
   // For now we will only have one type (U8),
   // so ensure that the next token is a U*
   // keyword. TODO: Add other types.
@@ -142,32 +140,99 @@ static void var_dec() {
   rmkglobsym(idbuf);
   
   if (cur_token.type == TT_EQUALS) {
-    assignment(1);
-    return;                           // No need to handle semi as assignment() does already.
+    return assignment(1);    // No need to handle semi as assignment() does already
   }
 
   semi();
+  return NULL;
 }
 
 
-static void statement(void) {
+static void lbrace(void) {
+  tok_assert(TT_LBRACE, "{");
+}
+
+
+static void rbrace(void) {
+  tok_assert(TT_RBRACE, "}");
+}
+
+
+static struct ASTNode* statement(void);
+
+
+static struct ASTNode* if_statement(void) {
+  struct ASTNode* conditionAST = NULL;
+  struct ASTNode* trueAST = NULL;
+  struct ASTNode* falseAST = NULL;
+
+  tok_assert(TT_IF, "if");
+  tok_assert(TT_LPAREN, "(");
+  conditionAST = binexpr();
+
+  if (conditionAST->op < AST_EQ || conditionAST->op > AST_GE) {
+    printf(ERR "Bad comparison operator used on line %d\n", get_line_num());
+    panic();
+  }
+
+  tok_assert(TT_RPAREN, ")");
+
+  trueAST = statement();
+
+  if (cur_token.type == TT_ELSE) {
+    scan(&cur_token);
+    falseAST = statement();
+  }
+
+  return mkastnode(AST_IF, conditionAST, trueAST, falseAST, 0);
+}
+
+
+static struct ASTNode* statement(void) {
+  struct ASTNode* left = NULL;
+  struct ASTNode* tree = NULL;
+
+  lbrace();
+
   while (1) { 
     switch (cur_token.type) {
       case TT_EOF:
-        return;
+        return NULL;
       case TT_U8:
-        var_dec();
+        tree = var_dec();
+
+        if (tree != NULL) {
+          mkAST(tree, -1, 0);
+          freeall_regs();
+        }
+
         break;
       case TT_OUT:
-        out_statement();
+        tree = out_statement();
+        break;
+      case TT_IF:
+        tree = if_statement();
         break;
       case TT_ID:
-        assignment(0);
+        tree = assignment(0);
+        mkAST(tree, -1, 0);
+        freeall_regs();
         break;
+      case TT_RBRACE:
+        rbrace();
+        return left;
       default:
         printf(ERR "Syntax error near line %d\n", get_line_num());
         panic();
-    } 
+    }
+
+    if (tree) {
+      if (left == NULL) {
+        left = tree;
+      } else {
+        left = mkastnode(AST_GLUE, left, NULL, tree, 0);
+      }
+    }
   }
 }
 
@@ -175,6 +240,6 @@ static void statement(void) {
 void parse(void) {
   scan(&cur_token);
   compile_init();
-  statement();
+  mkAST(statement(), -1, 0);
   compile_end();
 }

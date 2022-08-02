@@ -5,7 +5,7 @@
 
 typedef int8_t REG;
 
-REG mkAST(struct ASTNode* tree, REG r);
+REG mkAST(struct ASTNode* node, REG r, AST_OP parent_op);
 void compile_init(void);
 void compile_end(void);
 void check_regs(REG r1, REG r2);

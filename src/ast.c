@@ -7,7 +7,7 @@ extern FILE* input;
 static struct ASTNode** nodes = NULL;
 static uint64_t nodes_idx = 0;
 
-struct ASTNode* mkastnode(AST_OP op, struct ASTNode* left, struct ASTNode* right, uint64_t intval) {
+struct ASTNode* mkastnode(AST_OP op, struct ASTNode* left, struct ASTNode* mid, struct ASTNode* right, uint64_t intval) {
   if (nodes == NULL) {
     nodes = malloc(sizeof(struct ASTNode*));
     if (nodes == NULL) {
@@ -29,6 +29,7 @@ struct ASTNode* mkastnode(AST_OP op, struct ASTNode* left, struct ASTNode* right
   n->left = left;
   n->right = right;
   n->intval = intval;
+  n->mid = mid;
 
   nodes = realloc(nodes, sizeof(struct ASTNode*) * (nodes_idx + 2));
   
@@ -47,11 +48,11 @@ struct ASTNode* mkastnode(AST_OP op, struct ASTNode* left, struct ASTNode* right
 
 
 struct ASTNode* mkastleaf(AST_OP op, int intval) {
-  return mkastnode(op, NULL, NULL, intval);
+  return mkastnode(op, NULL, NULL, NULL, intval);
 }
 
 struct ASTNode* mkastunary(AST_OP op, struct ASTNode* left, int intval) {
-  return mkastnode(op, left, NULL, intval);
+  return mkastnode(op, left, NULL, NULL, intval);
 }
 
 
