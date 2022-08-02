@@ -11,3 +11,7 @@ CFLAGS = -Werror=implicit     \
 all: $(CFILES)
 	@ mkdir -p bin
 	gcc $(CFLAGS) -Iinclude $^ -o bin/kesscc
+
+.PHONY: install
+install: bin/kesscc
+	sudo install bin/kesscc /usr/local/bin/kesscc
