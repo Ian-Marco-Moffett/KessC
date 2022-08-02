@@ -44,7 +44,7 @@ int main(int argc, char** argv) {
     input = fopen(argv[i], "r");
 
     if (input == NULL) {
-      printf("KessCC: %s does not exist!\n", input);
+      printf("KessCC: Could not open %s, it does not exist!\n", argv[i]);
       return 1;
     }
 
