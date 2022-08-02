@@ -1,8 +1,11 @@
 {
   u8 i = 0;
 
-  while (i <= 2) {
-    out(i);
+  while (i <= 10) {
+    if (i > 4) {
+      out(i);
+    }
+
     i = i + 1;
   }
 }
