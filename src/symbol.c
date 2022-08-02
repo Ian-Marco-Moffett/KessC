@@ -18,15 +18,6 @@ int16_t locateglob(const char* name) {
 }
 
 
-
-void destroy_symtbl(void) {
-  for (uint64_t i = 0; i < glob_syms_count; ++i) {
-    free(globsyms->name);
-  }
-}
-
-
-
 static uint16_t mkglob(void) {
   uint16_t p = 0;
 

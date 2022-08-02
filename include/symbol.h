@@ -12,7 +12,6 @@ struct SymbolTable {
 };
 
 
-void destroy_symtbl(void);
 int16_t pushglob(const char* name);
 int16_t locateglob(const char* name);
 
