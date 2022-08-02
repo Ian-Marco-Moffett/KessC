@@ -18,6 +18,7 @@ typedef enum {
   TT_ID,
   TT_IF,
   TT_ELSE,
+  TT_WHILE,
   TT_LBRACE,
   TT_RBRACE,
 

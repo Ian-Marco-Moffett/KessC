@@ -22,6 +22,7 @@ typedef enum {
   AST_GLUE,
   AST_IF,
   AST_OUT,
+  AST_WHILE,
 } AST_OP;
 
 

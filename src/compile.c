@@ -283,12 +283,35 @@ static REG mkifast(struct ASTNode* n) {
 }
 
 
+static REG mkwhile(struct ASTNode* n) {
+  uint64_t start_label, end_label;
+
+  start_label = alloc_label();
+  end_label = alloc_label();
+
+  rlabel(start_label);
+
+  // Generate condition code with a jump to
+  // the end label.
+  mkAST(n->left, end_label, n->op);
+  freeall_regs();
+
+  // Generate compound statement for body.
+  mkAST(n->right, -1, n->op);
+  freeall_regs();
+  rjmp(start_label);
+  rlabel(end_label);
+  return -1;
+}
+
 REG mkAST(struct ASTNode* node, REG r, AST_OP parent_op) {
   uint64_t leftreg, rightreg;
 
   switch (node->op) {
     case AST_IF:
       return mkifast(node);
+    case AST_WHILE:
+      return mkwhile(node);
     case AST_GLUE:
       mkAST(node->left, -1, node->op);
       freeall_regs();
@@ -326,7 +349,7 @@ REG mkAST(struct ASTNode* node, REG r, AST_OP parent_op) {
     case AST_GT:
     case AST_LE:
     case AST_GE:
-      if (parent_op == AST_IF) {
+      if (parent_op == AST_IF || parent_op == AST_WHILE) {
         return rcmpnjmp(node->op, leftreg, rightreg, r);
       }
 

@@ -8,6 +8,8 @@
 static struct Token cur_token;
 extern char idbuf[];
 
+static struct ASTNode* statement(void);
+
 static struct ASTNode* primary(void) {
   struct ASTNode* n; 
   uint64_t id;
@@ -50,7 +52,6 @@ static void semi(void) {
   tok_assert(TT_SEMI, ";");
 }
 
-
 struct ASTNode* binexpr(void) {
   AST_OP ntype;
 
@@ -68,6 +69,29 @@ struct ASTNode* binexpr(void) {
   struct ASTNode* n = mkastnode(ntype, left, NULL, right, 0);
   return n;
 }
+
+
+static struct ASTNode* while_statement(void) {
+  struct ASTNode* conditionAST;
+  struct ASTNode* bodyAST;
+  
+  tok_assert(TT_WHILE, "while");
+  tok_assert(TT_LPAREN, "(");
+
+  // Parse expression.
+  conditionAST = binexpr();
+
+  if (conditionAST->op < AST_EQ || conditionAST->op > AST_GE) {
+    printf(ERR "Bad comparison operator used on line %d\n", get_line_num());
+    panic();
+  }
+
+  tok_assert(TT_RPAREN, ")");
+
+  bodyAST = statement();
+  return mkastnode(AST_WHILE, conditionAST, NULL, bodyAST, 0);
+}
+
 
 
 static struct ASTNode* out_statement(void) {
@@ -158,9 +182,6 @@ static void rbrace(void) {
 }
 
 
-static struct ASTNode* statement(void);
-
-
 static struct ASTNode* if_statement(void) {
   struct ASTNode* conditionAST = NULL;
   struct ASTNode* trueAST = NULL;
@@ -217,6 +238,9 @@ static struct ASTNode* statement(void) {
         tree = assignment(0);
         mkAST(tree, -1, 0);
         freeall_regs();
+        break;
+      case TT_WHILE:
+        tree = while_statement();
         break;
       case TT_RBRACE:
         rbrace();

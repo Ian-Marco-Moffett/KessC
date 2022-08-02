@@ -82,6 +82,8 @@ static TOKEN_TYPE keyword(const char* what) {
     return TT_IF;
   } else if (strcmp(what, "else") == 0) {
     return TT_ELSE;
+  } else if (strcmp(what, "while") == 0) {
+    return TT_WHILE;
   }
 }
 
@@ -197,6 +199,9 @@ uint8_t scan(struct Token* tok) {
             return 1;
           case TT_ELSE:
             tok->type = TT_ELSE;
+            return 1;
+          case TT_WHILE:
+            tok->type = TT_WHILE;
             return 1;
           default:
             // If it is not a keyword, 
