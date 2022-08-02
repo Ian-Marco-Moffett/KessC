@@ -4,7 +4,7 @@
   u8 var1;
   var1 = 3;
 
-  if (1 < 2) {
+  if (somevar < var1) {
     out(somevar);
     out(var1);
   }
