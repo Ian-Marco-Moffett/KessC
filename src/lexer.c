@@ -89,8 +89,7 @@ static TOKEN_TYPE keyword(const char* what) {
 
 
 static char skip(void) {
-  char c = next();
-
+  char c = next(); 
   while (c == ' ' || c == '\t' || c == '\n' || c == '\r') {
     c = next();
   }
@@ -124,6 +123,19 @@ uint8_t scan(struct Token* tok) {
       tok->ch = '*';
       break;
     case '/':
+      if ((cur = next()) == '/') { 
+        while (1) {
+          cur = next();
+
+          if (cur == '\n') {
+            scan(tok);
+            return 1;
+          }
+        }
+      } else {
+        putback();
+      }
+
       tok->type = TT_SLASH;
       tok->ch = '/';
       break;
