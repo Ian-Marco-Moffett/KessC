@@ -13,6 +13,12 @@ typedef enum {
   AST_LVID,     // lvalue ID.
   AST_ASSIGN,
   AST_ID,
+  AST_EQ,
+  AST_NE,
+  AST_LT,
+  AST_GT,
+  AST_LE,
+  AST_GE
 } AST_OP;
 
 

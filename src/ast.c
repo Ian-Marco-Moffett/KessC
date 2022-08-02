@@ -74,5 +74,17 @@ AST_OP arithop(TOKEN_TYPE tok_type) {
       return AST_MUL;
     case TT_SLASH:
       return AST_DIV;
+    case TT_EQ:
+      return AST_EQ;
+    case TT_NE:
+      return AST_NE;
+    case TT_LT:
+      return AST_LT;
+    case TT_GT:
+      return AST_GT;
+    case TT_LE:
+      return AST_LE;
+    case TT_GE:
+      return AST_GT;
   }
 }

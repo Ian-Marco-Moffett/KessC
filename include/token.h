@@ -17,6 +17,14 @@ typedef enum {
   TT_U8,
   TT_ID,
 
+  // Comparison operators.
+  TT_LT,
+  TT_GT,
+  TT_LE,
+  TT_GE,
+  TT_EQ,
+  TT_NE,
+
   // Keywords.
   TT_OUT,             // Like print.
 } TOKEN_TYPE;

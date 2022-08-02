@@ -19,6 +19,7 @@
 extern struct SymbolTable globsyms[MAX_SYMBOLS];
 static FILE* out = NULL;
 static char* regs[MAX_USED_REGS] = {"%r8", "%r9", "%r10", "%r11"};
+static char* bregs[MAX_USED_REGS] = {"%r8b", "%r9b", "%r10b", "%r11b"};
 static uint8_t reg_bitmap = 0b1111;
 static char out_name[150];
 
@@ -156,6 +157,40 @@ static REG rstoreglob(REG r, const char* name) {
   return r;
 }
 
+// Compare two regs.
+static REG rcmp(REG r1, REG r2, const char* how) {
+  fprintf(out, "\tcmpq\t%s, %s\n", regs[r2], regs[r1]);
+  fprintf(out, "\t%s\t%s\n", how, bregs[r2]);
+  fprintf(out, "\tandq\t$0xFF, %s\n", regs[r2]);
+  free_reg(r1);
+  return r2;
+}
+
+static REG requal(REG r1, REG r2) {
+  return rcmp(r1, r2, "sete");
+}
+
+static REG rnotequal(REG r1, REG r2) {
+  return rcmp(r1, r2, "setne");
+}
+
+static REG rlessthan(REG r1, REG r2) {
+  return rcmp(r1, r2, "setl");
+}
+
+static REG rgreaterthan(REG r1, REG r2) {
+  return rcmp(r1, r2, "setg");
+}
+
+
+static REG rlessequal(REG r1, REG r2) {
+  return rcmp(r1, r2, "setle");
+}
+
+static REG rgreaterequal(REG r1, REG r2) {
+  return rcmp(r1, r2, "setge");
+}
+
 void rmkglobsym(const char* name) {
   fprintf(out, "\t.comm\t%s, 8, 8\n", name);
 }
@@ -194,7 +229,19 @@ REG mkAST(struct ASTNode* node, REG r) {
     case AST_MUL:
       return rmul(leftreg, rightreg);
     case AST_DIV:
-      return rdiv(leftreg, rightreg); 
+      return rdiv(leftreg, rightreg);
+    case AST_EQ:
+      return requal(leftreg, rightreg);
+    case AST_NE:
+      return rnotequal(leftreg, rightreg);
+    case AST_LT:
+      return rnotequal(leftreg, rightreg);
+    case AST_GT:
+      return rgreaterthan(leftreg, rightreg);
+    case AST_LE:
+      return rlessequal(leftreg, rightreg);
+    case AST_GE:
+      return rgreaterequal(leftreg, rightreg);
   }
 }
 

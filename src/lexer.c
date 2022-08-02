@@ -126,9 +126,39 @@ uint8_t scan(struct Token* tok) {
       tok->ch = ';';
       break;
     case '=':
-      tok->type = TT_EQUALS;
-      tok->ch = '=';
+      if ((cur = next()) == '=') {
+        tok->type = TT_EQ;
+      } else {
+        putback();
+        tok->type = TT_EQUALS;
+        tok->ch = '=';
+      }
       break;
+    case '>':
+      if ((cur = next()) == '=') {
+        tok->type = TT_GE;
+      } else {
+        putback();
+        tok->type = TT_GT;
+      }
+      break;
+    case '<':
+      if ((cur = next()) == '=') {
+        tok->type = TT_LE;
+      } else {
+        putback();
+        tok->type = TT_LT;
+      }
+      break;
+    case '!':
+      if ((cur = next()) == '=') {
+        tok->type = TT_NE;
+      } else {
+        // TODO: Remove error, and treat this as logical NOT.
+        printf(ERR "Invalid token on line %d\n", line_num);
+        fclose(input);
+        exit(1);
+      }
     case EOF:
       tok->type = TT_EOF;
       tok->ch = '\0';
