@@ -2,22 +2,37 @@
 #include <ast.h>
 #include <err.h>
 #include <compile.h>
+#include <symbol.h>
 #include <stdio.h>
 
 static struct Token cur_token;
+extern char idbuf[];
 
 static struct ASTNode* primary(void) {
   struct ASTNode* n; 
+  uint64_t id;
 
   switch (cur_token.type) {
     case TT_INTLIT:
       n = mkastleaf(AST_INTLIT, cur_token.intval);
-      scan(&cur_token);
-      return n;
+      break;
+    case TT_ID:
+      id = locateglob(idbuf);
+
+      if (id == -1) {
+        printf(ERR "\"%s\" undeclared.\n");
+        panic();
+      }
+
+      n = mkastleaf(AST_ID, id);
+      break;
     default:
       printf(ERR "Syntax error near line %d\n", get_line_num());
       panic();
   }
+  
+  scan(&cur_token);
+  return n;
 }
 
 
@@ -54,23 +69,82 @@ struct ASTNode* binexpr(void) {
   return n;
 }
 
+
+static void out_statement(void) {
+  tok_assert(TT_OUT, "out");
+  tok_assert(TT_LPAREN, "(");
+
+  struct ASTNode* tree = binexpr();
+  REG reg = mkAST(tree, -1);
+
+  rprint(reg);
+  freeall_regs();
+
+  tok_assert(TT_RPAREN, ")");
+  semi();
+}
+
+
+static void id(void) {
+  tok_assert(TT_ID, "identifier");
+}
+
+
+static void assignment(void) {
+  // Ensure the existance of an identifier.
+  id();
+
+  uint64_t id = locateglob(idbuf);
+
+  if (id == -1) {
+    printf(ERR "Referance to an undeclared variable \"%s\" near line %d\n", idbuf, get_line_num());
+    panic();
+  }
+
+  struct ASTNode* right = mkastleaf(AST_LVID, id);
+  tok_assert(TT_EQUALS, "=");
+  
+  // Parse the expression.
+  struct ASTNode* left = binexpr();
+
+  struct ASTNode* tree = mkastnode(AST_ASSIGN, left, right, 0);
+  mkAST(tree, -1);
+  freeall_regs();
+  semi();
+}
+
+
+static void var_dec() {
+  // For now we will only have one type (U8),
+  // so ensure that the next token is a U*
+  // keyword. TODO: Add other types.
+  
+  tok_assert(TT_U8, "u8");
+  id();
+  pushglob(idbuf);
+  rmkglobsym(idbuf);
+  semi();
+}
+
+
 static void statement(void) {
-  while (1) {
-    tok_assert(TT_OUT, "out");
-    tok_assert(TT_LPAREN, "(");
-
-    struct ASTNode* tree = binexpr();
-    REG reg = mkAST(tree);
-
-    rprint(reg);
-    freeall_regs();
-
-    tok_assert(TT_RPAREN, ")");
-    semi();
-
-    if (cur_token.type == TT_EOF) {
-      return;
-    }
+  while (1) { 
+    switch (cur_token.type) {
+      case TT_EOF:
+        return;
+      case TT_U8:
+        var_dec();
+        break;
+      case TT_OUT:
+        out_statement();
+        break;
+      case TT_ID:
+        assignment();
+        break;
+      default:
+        printf(ERR "Syntax error near line %d\n", get_line_num());
+        panic();
+    } 
   }
 }
 

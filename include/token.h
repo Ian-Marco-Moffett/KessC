@@ -13,6 +13,9 @@ typedef enum {
   TT_SEMI,
   TT_LPAREN,
   TT_RPAREN,
+  TT_EQUALS,
+  TT_U8,
+  TT_ID,
 
   // Keywords.
   TT_OUT,             // Like print.

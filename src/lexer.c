@@ -10,7 +10,7 @@
 
 extern FILE* input;
 static uint64_t line_num = 1;
-static char idbuf[IDENT_MAX_LEN];
+char idbuf[IDENT_MAX_LEN];
 
 // Return the position of character c
 // in string s, or -1 if c not found
@@ -76,6 +76,8 @@ static uint16_t scanid(char c, char* buf) {
 static TOKEN_TYPE keyword(const char* what) {
   if (strcmp(what, "out") == 0) {
     return TT_OUT;
+  } else if (strcmp(what, "u8") == 0) {
+    return TT_U8;
   }
 }
 
@@ -123,6 +125,10 @@ uint8_t scan(struct Token* tok) {
       tok->type = TT_SEMI;
       tok->ch = ';';
       break;
+    case '=':
+      tok->type = TT_EQUALS;
+      tok->ch = '=';
+      break;
     case EOF:
       tok->type = TT_EOF;
       tok->ch = '\0';
@@ -141,10 +147,14 @@ uint8_t scan(struct Token* tok) {
           case TT_OUT:
             tok->type = TT_OUT;
             return 1;
+          case TT_U8:
+            tok->type = TT_U8;
+            return 1;
           default:
-            printf(ERR "Invalid keyword or identifier on line %d\n", line_num);
-            fclose(input);
-            exit(1);
+            // If it is not a keyword, 
+            // it must be an ID.
+            tok->type = TT_ID;
+            return 1;
         }
       }
 

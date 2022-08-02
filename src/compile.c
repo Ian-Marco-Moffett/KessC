@@ -1,5 +1,6 @@
 #include <compile.h>
 #include <err.h>
+#include <symbol.h>
 #include <flags.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,6 +16,7 @@
 #define PATH_RAND (rand() % (PATH_HIGHEST_ASCII_VAL - PATH_LOWEST_ASCII_VAL + 1)) + PATH_LOWEST_ASCII_VAL
 #define MAX_USED_REGS 4
 
+extern struct SymbolTable globsyms[MAX_SYMBOLS];
 static FILE* out = NULL;
 static char* regs[MAX_USED_REGS] = {"%r8", "%r9", "%r10", "%r11"};
 static uint8_t reg_bitmap = 0b1111;
@@ -61,7 +63,7 @@ static REG rload(uint64_t value) {
 void check_regs(REG r1, REG r2) {
   if (r1 < 0 || r2 < 0) {
     printf(ERR "Ran out of registers.");
-    exit(1);
+    panic();
   }
 }
 
@@ -141,6 +143,23 @@ static void prologue(void) {
     out);
 }
 
+static REG rloadglob(const char* name) {
+  REG reg = alloc_reg();
+  check_regs(reg, 0);
+  fprintf(out, "\tmovq\t%s(%%rip), %s\n", name, regs[reg]);
+  return reg;
+}
+
+
+static REG rstoreglob(REG r, const char* name) {
+  fprintf(out, "\tmovq\t%s, %s(%%rip)\n", regs[r], name);
+  return r;
+}
+
+void rmkglobsym(const char* name) {
+  fprintf(out, "\t.comm\t%s, 8, 8\n", name);
+}
+
 static void epilogue(void) {
   fputs(
 	  "\tmovl	$0, %eax\n"
@@ -150,18 +169,24 @@ static void epilogue(void) {
 }
 
 
-REG mkAST(struct ASTNode* node) {
+REG mkAST(struct ASTNode* node, REG r) {
   uint64_t leftreg, rightreg;
 
   if (node->left) {
-    leftreg = mkAST(node->left);
+    leftreg = mkAST(node->left, -1);
   }
 
   if (node->right) {
-    rightreg = mkAST(node->right);
+    rightreg = mkAST(node->right, leftreg);
   }
 
   switch (node->op) {
+    case AST_INTLIT:
+      return rload(node->intval);
+    case AST_ID:
+      return rloadglob(globsyms[node->id].name);
+    case AST_LVID:
+      return rstoreglob(r, globsyms[node->id].name);
     case AST_ADD:
       return radd(leftreg, rightreg);
     case AST_SUB:
@@ -169,9 +194,7 @@ REG mkAST(struct ASTNode* node) {
     case AST_MUL:
       return rmul(leftreg, rightreg);
     case AST_DIV:
-      return rdiv(leftreg, rightreg);
-    case AST_INTLIT:
-      return rload(node->intval);
+      return rdiv(leftreg, rightreg); 
   }
 }
 

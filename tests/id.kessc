@@ -1,0 +1,3 @@
+u8 var;
+var = 2;
+out(var);

@@ -9,7 +9,10 @@ typedef enum {
   AST_SUB,
   AST_MUL,
   AST_DIV,
-  AST_INTLIT
+  AST_INTLIT,
+  AST_LVID,     // lvalue ID.
+  AST_ASSIGN,
+  AST_ID,
 } AST_OP;
 
 
@@ -17,7 +20,11 @@ struct ASTNode {
   AST_OP op;
   struct ASTNode* left;
   struct ASTNode* right;
-  uint64_t intval;
+
+  union {
+    uint64_t intval;
+    uint64_t id;      // For identifiers.
+  };
 };
 
 

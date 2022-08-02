@@ -3,6 +3,7 @@
 #include <parser.h>
 #include <ast.h>
 #include <flags.h>
+#include <symbol.h>
 
 #ifndef linux
 #error // Linux only for now.
@@ -15,10 +16,12 @@ COMPILE_FLAGS compile_flags = 0;
 static void run(void) {
   parse();
   ast_destroy();
+  destroy_symtbl();
 }
 
 void panic(void) {
   fclose(input);
+  destroy_symtbl();
   exit(1);
 }
 
