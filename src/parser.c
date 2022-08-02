@@ -89,10 +89,27 @@ static void id(void) {
   tok_assert(TT_ID, "identifier");
 }
 
+/*
+ *  init should be 1 if variable is made like so:
+ *
+ *  u8 var = 2;
+ *
+ *  but if it is like so:
+ *
+ *  u8 var;
+ *  var = 2;
+ *
+ *  Then init should be 0.
+ *
+ *
+ */
 
-static void assignment(void) {
-  // Ensure the existance of an identifier.
-  id();
+static void assignment(uint8_t init) {
+  // Ensure the existance of an identifier if not init.
+
+  if (!(init)) {
+    id();
+  }
 
   uint64_t id = locateglob(idbuf);
 
@@ -123,6 +140,12 @@ static void var_dec() {
   id();
   pushglob(idbuf);
   rmkglobsym(idbuf);
+  
+  if (cur_token.type == TT_EQUALS) {
+    assignment(1);
+    return;                           // No need to handle semi as assignment() does already.
+  }
+
   semi();
 }
 
@@ -139,7 +162,7 @@ static void statement(void) {
         out_statement();
         break;
       case TT_ID:
-        assignment();
+        assignment(0);
         break;
       default:
         printf(ERR "Syntax error near line %d\n", get_line_num());

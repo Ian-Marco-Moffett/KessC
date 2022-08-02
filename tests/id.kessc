@@ -1,3 +1,9 @@
-u8 var;
-var = 2;
+u8 var = 2;
+u8 number4 = 2+2;
+
+u8 declaration;
+declaration = 5;
+
 out(var);
+out(number4);
+out(declaration);
