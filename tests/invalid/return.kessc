@@ -1,0 +1,7 @@
+void noret() {
+  return 0;
+}
+
+u8 main() {
+  return 0;
+}

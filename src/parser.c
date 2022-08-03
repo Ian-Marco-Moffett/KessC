@@ -290,7 +290,7 @@ static struct ASTNode* return_statement(void) {
   PTYPE returntype, functype;
 
   if (globsyms[current_function_id].ptype == PT_VOID) {
-    printf(ERR "Value being returned from void function, near line %d\n", get_line_num());
+    printf(ERR "Value being returned from void function, near line %d\nWe all make mistakes, don't be ashamed of this :)\n", get_line_num());
     panic();
   }
 
