@@ -11,6 +11,8 @@ extern char idbuf[];
 extern struct SymbolTable globsyms[MAX_SYMBOLS];
 
 static struct ASTNode* statement(void);
+static struct ASTNode* funccall(void);
+uint64_t current_function_id = 0;
 
 static struct ASTNode* primary(void) {
   struct ASTNode* n; 
@@ -27,6 +29,18 @@ static struct ASTNode* primary(void) {
       }
       break;
     case TT_ID:
+      // This could be a variable or function call.
+      scan(&cur_token);
+
+      // Theres an open parenthesis, thus
+      // it's a function call.
+      if (cur_token.type == TT_LPAREN) {
+        return funccall();
+      }
+    
+      // Not a function call, reject token.
+      reject_token(&cur_token);
+
       id = locateglob(idbuf);
 
       if (id == -1) {
@@ -140,6 +154,13 @@ static struct ASTNode* assignment(uint8_t init) {
 
   if (!(init)) {
     id();
+
+    // This could be a variable or a function call, 
+    // if we have an lparen then this is a function call.
+    if (cur_token.type == TT_LPAREN) {
+      return funccall();
+    }
+
   }
 
   uint64_t id = locateglob(idbuf);
@@ -174,10 +195,6 @@ static PTYPE parse_type(TOKEN_TYPE t) {
 
 
 static struct ASTNode* var_dec() {
-  // For now we will only have one type (U8),
-  // so ensure that the next token is a U*
-  // keyword. TODO: Add other types.
-  
   PTYPE type = parse_type(cur_token.type);
 
   if (type == PT_VOID) {
@@ -207,15 +224,106 @@ static void rbrace(void) {
   tok_assert(TT_RBRACE, "}");
 }
 
+static struct ASTNode* funccall(void) {
+  struct ASTNode* tree;
+  uint64_t id = locateglob(idbuf);
+
+  // Panic if function is not defined.
+  if (id == -1) {
+    printf(ERR "Undefined function %s, line %d. It's okay, everybody forgets things :)", get_line_num());
+    panic();
+  }
+
+  tok_assert(TT_LPAREN, "(");
+
+  // Parse expression inside parenthesis.
+  tree = binexpr();
+
+  // Build function call AST node.
+  // Functions return type will be the node's type.
+  // Also keep track of the function's symbol ID.
+  tree = mkastunarytype(AST_FUNCCALL, globsyms[id].ptype, tree, id);
+  tok_assert(TT_RPAREN, ")");
+  semi();
+  return tree;
+}
+
+
+uint8_t type_compatible(PTYPE* left, PTYPE* right, int rightonly) {
+  uint64_t leftsize, rightsize;
+
+  // Same types, they are compatible.
+  if (*left == *right) {
+    *left = *right = 0;
+    return 1;
+  }
+
+  // Get sizes for each time.
+  rprimsize(*left);
+  rprimsize(*right);
+
+  // Types with zero size won't work with anything at all.
+  if ((leftsize == 0) || (rightsize == 0)) {
+    return 0;
+  }
+
+  if (leftsize < rightsize) {
+    *left = AST_WIDEN;
+    *right = 0;
+    return 1;
+  }
+
+  if (rightsize < leftsize) {
+    if (rightonly) {
+      *left = 0;
+      *right = AST_WIDEN;
+      return 1;
+    }
+  }
+
+  *left = *right = 0;
+  return 1;
+}
+
+
+static struct ASTNode* return_statement(void) {
+  struct ASTNode* tree;
+  PTYPE returntype, functype;
+
+  if (globsyms[current_function_id].ptype == PT_VOID) {
+    printf(ERR "Value being returned from void function, near line %d\n", get_line_num());
+    panic();
+  }
+
+  // Ensure there is a return statement.
+  tok_assert(TT_RETURN, "return");
+  
+  // Parse expression.
+  tree = binexpr();
+  returntype = tree->type;
+  functype = globsyms[current_function_id].ptype;
+
+  // Ensure type is good with this functions return type.
+  if (!(type_compatible(&returntype, &functype, 1))) {
+    printf(ERR "Incompatible return type near line %d\n", get_line_num());
+    panic();
+  }
+
+  // TODO: Do something here when types get bigger.
+  tree = mkastunarytype(AST_RETURN, PT_NONE, tree, 0);
+  semi();
+  return tree;
+}
 
 static struct ASTNode* func_def(void) {
   struct ASTNode* tree;
   uint64_t symslot;
 
   PTYPE type = parse_type(cur_token.type);
-  tok_assert(TT_VOID, "void");
+  scan(&cur_token);
   id();
   symslot = pushglob(idbuf, type, ST_FUNC);
+  current_function_id = symslot;
   tok_assert(TT_LPAREN, "(");
   tok_assert(TT_RPAREN, ")");
 
@@ -285,6 +393,9 @@ static struct ASTNode* statement(void) {
       case TT_WHILE:
         tree = while_statement();
         break;
+      case TT_RETURN:
+          tree = return_statement();
+          break;
       case TT_RBRACE:
         rbrace();
         return left;
@@ -307,6 +418,15 @@ static struct ASTNode* statement(void) {
 void parse(void) {
   scan(&cur_token);
   compile_init();
-  mkAST(func_def(), -1, 0);
+
+  while (1) {
+    mkAST(func_def(), -1, 0);
+  
+    if (cur_token.type == TT_EOF) {
+      break;
+    }
+
+  }
+
   compile_end();
 }

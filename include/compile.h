@@ -12,6 +12,5 @@ void check_regs(REG r1, REG r2);
 void rprint(REG r);
 void freeall_regs(void);
 void rmkglobsym(uint64_t id);
-
-
+uint64_t rprimsize(PTYPE type);
 #endif

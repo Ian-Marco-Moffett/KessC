@@ -22,6 +22,7 @@ typedef enum {
   TT_WHILE,
   TT_LBRACE,
   TT_RBRACE,
+  TT_RETURN,
 
   // Comparison operators.
   TT_LT,

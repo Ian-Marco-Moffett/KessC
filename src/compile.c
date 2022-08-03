@@ -18,8 +18,13 @@
 
 extern struct SymbolTable globsyms[MAX_SYMBOLS];
 static FILE* out = NULL;
-static char* regs[MAX_USED_REGS] = {"%r8", "%r9", "%r10", "%r11"};
-static char* bregs[MAX_USED_REGS] = {"%r8b", "%r9b", "%r10b", "%r11b"};
+static const char* regs[MAX_USED_REGS] = {"%r8", "%r9", "%r10", "%r11"};
+static const char* bregs[MAX_USED_REGS] = {"%r8b", "%r9b", "%r10b", "%r11b"};
+// static const char* dregs[MAX_USED_REGS] = {"%r8d", "%r9d", "%r10d", "%r11d"};
+
+// Array of type sizes in order.
+//                       PT_NONE   PT_VOID    PT_CHAR
+static uint8_t ptsize[] = {0,       0,         1};
 static uint8_t reg_bitmap = 0b1111;
 static char out_name[150];
 
@@ -58,6 +63,16 @@ static REG rload(uint64_t value) {
   fprintf(out, "\tmovq\t$%d, %s\n", value, regs[r]);
   return r;
 
+}
+
+
+uint64_t rprimsize(PTYPE type) {
+  if (type < PT_NONE || type > PT_U8) {
+    printf(ERR "__INTERNAL_ERR__: Invalid type in %s\n", __func__);
+    panic();
+  }
+
+  return ptsize[type];
 }
 
 
@@ -116,6 +131,26 @@ void rprintint(REG r) {
 }
 
 
+static REG rcall(REG r, uint64_t id) {
+  REG outr = alloc_reg();
+  fprintf(out, "\tmovq\t%s, %%rdi\n", regs[r]);
+  fprintf(out, "\tcall\t%s\n", globsyms[id].name);
+  fprintf(out, "\tmovq\t%%rax, %s\n", regs[outr]);
+  free_reg(r);
+  return outr;
+}
+
+
+static void rreturn(REG r, uint64_t id) {
+  // TODO: When told to use a x86_64 calling convention
+  // for long mode, use RAX instead of EAX.
+  switch (globsyms[id].ptype) {
+    case PT_U8:
+      fprintf(out, "\tmovzbl\t%s, %%eax\n", bregs[r]);
+      break;
+  }
+}
+
 
 static void prologue(void) {
   fputs(
@@ -151,7 +186,7 @@ static void func_prologue(const char* func_name) {
 
 
 static void func_epilogue(void) {
-  fputs("\tmovl	$0, %eax\n" "\tpopq	%rbp\n" "\tret\n", out);
+  fputs("\tpopq	%rbp\n" "\tret\n", out);
 }
 
 static REG rloadglob(uint64_t id) {
@@ -320,6 +355,7 @@ static REG mkwhile(struct ASTNode* n) {
 }
 
 REG mkAST(struct ASTNode* node, REG r, AST_OP parent_op) {
+  extern uint64_t current_function_id;
   uint64_t leftreg, rightreg;
 
   switch (node->op) {
@@ -341,7 +377,7 @@ REG mkAST(struct ASTNode* node, REG r, AST_OP parent_op) {
       }
 
       func_epilogue();
-      return -1;
+      return -1; 
   }
 
   if (node->left) {
@@ -381,6 +417,9 @@ REG mkAST(struct ASTNode* node, REG r, AST_OP parent_op) {
     case AST_OUT:
       rprintint(leftreg);
       freeall_regs();
+      return -1;
+    case AST_RETURN:
+      rreturn(leftreg, current_function_id);
       return -1;
   }
 }

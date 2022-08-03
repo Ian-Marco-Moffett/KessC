@@ -10,6 +10,7 @@
 
 extern FILE* input;
 static uint64_t line_num = 1;
+static struct Token* rejected_token = NULL;
 char idbuf[IDENT_MAX_LEN];
 
 // Return the position of character c
@@ -24,6 +25,16 @@ static int chrpos(char* s, int c) {
 
 static void putback(void) {
   fseek(input, ftell(input) - 1, SEEK_SET);
+}
+
+
+void reject_token(struct Token* tok) {
+  if (rejected_token != NULL) {
+    printf(ERR "__INTERNAL_ERROR__: INTERNAL FUNCTION %s() CALLED TWICE [Can't reject the same token twice]\n", __func__);
+    panic();
+  }
+
+  rejected_token = tok;
 }
 
 static char next(void) {
@@ -86,6 +97,8 @@ static TOKEN_TYPE keyword(const char* what) {
     return TT_WHILE;
   } else if (strcmp(what, "void") == 0) {
     return TT_VOID;
+  } else if (strcmp(what, "return") == 0) {
+    return TT_RETURN;
   }
 }
 
@@ -101,6 +114,13 @@ static char skip(void) {
 
 
 uint8_t scan(struct Token* tok) {
+  // Return any rejected tokens.
+  if (rejected_token != NULL) {
+    tok = rejected_token;
+    rejected_token = NULL;
+    return 1;
+  }
+
   char cur = skip();
 
   switch (cur) { 
@@ -219,6 +239,9 @@ uint8_t scan(struct Token* tok) {
             return 1;
           case TT_VOID:
             tok->type = TT_VOID;
+            return 1;
+          case TT_RETURN:
+            tok->type = TT_RETURN;
             return 1;
           default:
             // If it is not a keyword, 

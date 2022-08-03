@@ -1,4 +1,4 @@
-void main() {
+u8 main() {
   u8 i;
   u8 j = 1;
 
@@ -7,4 +7,6 @@ void main() {
     j = j + 1;
     out(i);
   }
+
+  return 0;
 }
