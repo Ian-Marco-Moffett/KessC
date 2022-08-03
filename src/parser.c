@@ -223,7 +223,7 @@ static struct ASTNode* statement(void) {
         tree = var_dec();
 
         if (tree != NULL) {
-          mkAST(tree, -1, 0);
+          mkAST(tree, -1, (AST_OP)0);
           freeall_regs();
         }
 
@@ -236,7 +236,7 @@ static struct ASTNode* statement(void) {
         break;
       case TT_ID:
         tree = assignment(0);
-        mkAST(tree, -1, 0);
+        mkAST(tree, -1, (AST_OP)0);
         freeall_regs();
         break;
       case TT_WHILE:
@@ -264,6 +264,6 @@ static struct ASTNode* statement(void) {
 void parse(void) {
   scan(&cur_token);
   compile_init();
-  mkAST(statement(), -1, 0);
+  mkAST(statement(), -1, (AST_OP)0);
   compile_end();
 }
