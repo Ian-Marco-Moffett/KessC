@@ -154,13 +154,12 @@ static struct ASTNode* assignment(uint8_t init) {
 
   if (!(init)) {
     id();
-
+    
     // This could be a variable or a function call, 
     // if we have an lparen then this is a function call.
     if (cur_token.type == TT_LPAREN) {
       return funccall();
     }
-
   }
 
   uint64_t id = locateglob(idbuf);

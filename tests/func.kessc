@@ -1,4 +1,11 @@
+u8 test() 
+{
+  out(1);
+  return 0;
+}
+
 u8 main() 
 {
+  test(0);
   return 1;
 }

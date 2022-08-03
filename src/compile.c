@@ -421,6 +421,8 @@ REG mkAST(struct ASTNode* node, REG r, AST_OP parent_op) {
     case AST_RETURN:
       rreturn(leftreg, current_function_id);
       return -1;
+    case AST_FUNCCALL:
+      return rcall(leftreg, node->id);
   }
 }
 
