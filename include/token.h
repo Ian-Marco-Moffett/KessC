@@ -15,6 +15,7 @@ typedef enum {
   TT_RPAREN,
   TT_EQUALS,
   TT_U8,
+  TT_VOID,
   TT_ID,
   TT_IF,
   TT_ELSE,

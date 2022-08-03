@@ -23,6 +23,7 @@ typedef enum {
   AST_IF,
   AST_OUT,
   AST_WHILE,
+  AST_FUNC,
 } AST_OP;
 
 

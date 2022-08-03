@@ -1,0 +1,10 @@
+void main() 
+{
+  u8 i = 1;
+
+  while (i <= 9) 
+  {
+    out(2 * i);
+    i = i + 1;
+  }
+}

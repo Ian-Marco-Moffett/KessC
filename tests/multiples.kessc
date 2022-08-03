@@ -1,4 +1,4 @@
-{
+void main() {
   u8 i;
   u8 j = 1;
 

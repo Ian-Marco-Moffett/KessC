@@ -182,6 +182,22 @@ static void rbrace(void) {
 }
 
 
+static struct ASTNode* func_def(void) {
+  struct ASTNode* tree;
+  uint64_t symslot;
+
+  tok_assert(TT_VOID, "void");
+  id();
+  symslot = pushglob(idbuf);
+  tok_assert(TT_LPAREN, "(");
+  tok_assert(TT_RPAREN, ")");
+
+  tree = statement();
+
+  return mkastunary(AST_FUNC, tree, symslot);
+}
+
+
 static struct ASTNode* if_statement(void) {
   struct ASTNode* conditionAST = NULL;
   struct ASTNode* trueAST = NULL;
@@ -264,6 +280,6 @@ static struct ASTNode* statement(void) {
 void parse(void) {
   scan(&cur_token);
   compile_init();
-  mkAST(statement(), -1, 0);
+  mkAST(func_def(), -1, 0);
   compile_end();
 }

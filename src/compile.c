@@ -135,13 +135,23 @@ static void prologue(void) {
 	  "\tnop\n"
 	  "\tleave\n"
 	  "\tret\n"
-	  "\n"
-	  "\t.globl\tmain\n"
-	  "\t.type\tmain, @function\n"
-	  "main:\n"
-	  "\tpushq\t%rbp\n"
-	  "\tmovq	%rsp, %rbp\n",
+	  "\n",
     out);
+}
+
+static void func_prologue(const char* func_name) {
+  fprintf(out,
+      "\t.text\n"
+      "\t.globl\t%s\n"
+      "\t.type\t%s, @function\n"
+      "%s:\n"
+      "\tpushq\t%%rbp\n"
+      "\tmovq\t%%rsp, %%rbp\n", func_name, func_name, func_name);
+}
+
+
+static void func_epilogue(void) {
+  fputs("\tmovl	$0, %eax\n" "\tpopq	%rbp\n" "\tret\n", out);
 }
 
 static REG rloadglob(const char* name) {
@@ -193,14 +203,6 @@ static REG rgreaterequal(REG r1, REG r2) {
 
 void rmkglobsym(const char* name) {
   fprintf(out, "\t.comm\t%s, 8, 8\n", name);
-}
-
-static void epilogue(void) {
-  fputs(
-	  "\tmovl	$0, %eax\n"
-	  "\tpopq	%rbp\n"
-	  "\tret\n",
-    out);
 }
 
 
@@ -318,6 +320,15 @@ REG mkAST(struct ASTNode* node, REG r, AST_OP parent_op) {
       mkAST(node->right, -1, node->op);
       freeall_regs();
       return -1;
+    case AST_FUNC:
+      func_prologue(globsyms[node->id].name);
+
+      if (node->left) {
+        mkAST(node->left, -1, node->op);
+      }
+
+      func_epilogue();
+      return -1;
   }
 
   if (node->left) {
@@ -374,8 +385,6 @@ void compile_init(void) {
 
 void compile_end(void) {
   extern COMPILE_FLAGS compile_flags;
-
-  epilogue();
   fclose(out);
 
   if (compile_flags & CF_ASMONLY) {
