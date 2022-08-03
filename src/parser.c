@@ -1,12 +1,14 @@
 #include <lexer.h>
 #include <ast.h>
 #include <err.h>
+#include <ptype.h>
 #include <compile.h>
 #include <symbol.h>
 #include <stdio.h>
 
 static struct Token cur_token;
 extern char idbuf[];
+extern struct SymbolTable globsyms[MAX_SYMBOLS];
 
 static struct ASTNode* statement(void);
 
@@ -16,7 +18,13 @@ static struct ASTNode* primary(void) {
 
   switch (cur_token.type) {
     case TT_INTLIT:
-      n = mkastleaf(AST_INTLIT, cur_token.intval);
+      // TODO: Support bigger types.
+      if (cur_token.intval >= 0 && cur_token.intval < 256) {
+        n = mkastleaf(AST_INTLIT, PT_U8, cur_token.intval);
+      } else {
+        printf(ERR "Value assigned to U8 overflows/underflows near line %d\n", get_line_num());
+        panic();
+      }
       break;
     case TT_ID:
       id = locateglob(idbuf);
@@ -26,7 +34,7 @@ static struct ASTNode* primary(void) {
         panic();
       }
 
-      n = mkastleaf(AST_ID, id);
+      n = mkastleaf(AST_ID, globsyms[id].ptype, id);
       break;
     default:
       printf(ERR "Syntax error near line %d\n", get_line_num());
@@ -141,7 +149,7 @@ static struct ASTNode* assignment(uint8_t init) {
     panic();
   }
 
-  struct ASTNode* right = mkastleaf(AST_LVID, id);
+  struct ASTNode* right = mkastleaf(AST_LVID, globsyms[id].ptype, id);
   tok_assert(TT_EQUALS, "=");
   
   // Parse the expression.
@@ -153,15 +161,33 @@ static struct ASTNode* assignment(uint8_t init) {
 }
 
 
+static PTYPE parse_type(TOKEN_TYPE t) {
+  switch (t) {
+    case TT_U8:
+      return PT_U8;
+    case TT_VOID:
+      return PT_VOID;
+    default:
+      printf(ERR "Illegal type used on line %d\n", get_line_num());
+  }
+}
+
+
 static struct ASTNode* var_dec() {
   // For now we will only have one type (U8),
   // so ensure that the next token is a U*
   // keyword. TODO: Add other types.
   
-  tok_assert(TT_U8, "u8");
+  PTYPE type = parse_type(cur_token.type);
+
+  if (type == PT_VOID) {
+    printf(ERR "Invalid variable type 'void' used on line %d\n", get_line_num());
+    panic();
+  }
+  
+  scan(&cur_token);
   id();
-  pushglob(idbuf);
-  rmkglobsym(idbuf);
+  rmkglobsym(pushglob(idbuf, type, ST_VAR));
   
   if (cur_token.type == TT_EQUALS) {
     return assignment(1);    // No need to handle semi as assignment() does already
@@ -186,9 +212,10 @@ static struct ASTNode* func_def(void) {
   struct ASTNode* tree;
   uint64_t symslot;
 
+  PTYPE type = parse_type(cur_token.type);
   tok_assert(TT_VOID, "void");
   id();
-  symslot = pushglob(idbuf);
+  symslot = pushglob(idbuf, type, ST_FUNC);
   tok_assert(TT_LPAREN, "(");
   tok_assert(TT_RPAREN, ")");
 

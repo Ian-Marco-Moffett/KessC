@@ -154,16 +154,25 @@ static void func_epilogue(void) {
   fputs("\tmovl	$0, %eax\n" "\tpopq	%rbp\n" "\tret\n", out);
 }
 
-static REG rloadglob(const char* name) {
+static REG rloadglob(uint64_t id) {
   REG reg = alloc_reg();
   check_regs(reg, 0);
-  fprintf(out, "\tmovq\t%s(%%rip), %s\n", name, regs[reg]);
+
+  switch (globsyms[id].ptype) {
+    case PT_U8:
+      fprintf(out, "\tmovzbq\t%s(%%rip), %s\n", globsyms[id].name, regs[reg]);
+        break;
+  }
+
   return reg;
 }
 
 
-static REG rstoreglob(REG r, const char* name) {
-  fprintf(out, "\tmovq\t%s, %s(%%rip)\n", regs[r], name);
+static REG rstoreglob(REG r, uint64_t id) {
+  switch (globsyms[id].ptype) {
+    case PT_U8:
+      fprintf(out, "\tmovb\t%s, %s(%%rip)\n", bregs[r], globsyms[id].name);
+  }
   return r;
 }
 
@@ -201,8 +210,12 @@ static REG rgreaterequal(REG r1, REG r2) {
   return rcmp(r1, r2, "setge");
 }
 
-void rmkglobsym(const char* name) {
-  fprintf(out, "\t.comm\t%s, 8, 8\n", name);
+void rmkglobsym(uint64_t id) {
+  switch (globsyms[id].ptype) {
+    case PT_U8:
+      fprintf(out, "\t.comm\t%s, 1, 1\n", globsyms[id].name);
+      break;
+  }
 }
 
 
@@ -343,9 +356,9 @@ REG mkAST(struct ASTNode* node, REG r, AST_OP parent_op) {
     case AST_INTLIT:
       return rload(node->intval);
     case AST_ID:
-      return rloadglob(globsyms[node->id].name);
+      return rloadglob(node->id);
     case AST_LVID:
-      return rstoreglob(r, globsyms[node->id].name);
+      return rstoreglob(r, node->id);
     case AST_ADD:
       return radd(leftreg, rightreg);
     case AST_SUB:

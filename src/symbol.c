@@ -30,7 +30,8 @@ static uint16_t mkglob(void) {
 
 // Return -1 if global symbol already exists.
 // Otherwise, returns slot number.
-int16_t pushglob(const char* name) {
+
+int16_t pushglob(const char* name, PTYPE ptype, STYPE stype) {
   int16_t slot = locateglob(name);
 
   if (slot != -1) {
@@ -39,5 +40,7 @@ int16_t pushglob(const char* name) {
   
   slot = mkglob();
   globsyms[slot].name = strdup(name);
+  globsyms[slot].stype = stype;
+  globsyms[slot].ptype = ptype;
   return slot;
 }

@@ -30,6 +30,7 @@ struct ASTNode* mkastnode(AST_OP op, struct ASTNode* left, struct ASTNode* mid, 
   n->right = right;
   n->intval = intval;
   n->mid = mid;
+  n->type = PT_NONE;
 
   nodes = realloc(nodes, sizeof(struct ASTNode*) * (nodes_idx + 2));
   
@@ -47,8 +48,10 @@ struct ASTNode* mkastnode(AST_OP op, struct ASTNode* left, struct ASTNode* mid, 
 
 
 
-struct ASTNode* mkastleaf(AST_OP op, int intval) {
-  return mkastnode(op, NULL, NULL, NULL, intval);
+struct ASTNode* mkastleaf(AST_OP op, PTYPE type, int intval) {
+  struct ASTNode* n = mkastnode(op, NULL, NULL, NULL, intval);
+  n->type = type;
+  return n;
 }
 
 struct ASTNode* mkastunary(AST_OP op, struct ASTNode* left, int intval) {

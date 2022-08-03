@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <token.h>
+#include <ptype.h>
 
 typedef enum {
   AST_ADD,
@@ -29,6 +30,7 @@ typedef enum {
 
 struct ASTNode {
   AST_OP op;
+  PTYPE type;
   struct ASTNode* left;
   struct ASTNode* mid;
   struct ASTNode* right;
@@ -41,8 +43,9 @@ struct ASTNode {
 
 
 struct ASTNode* mkastnode(AST_OP op, struct ASTNode* left, struct ASTNode* mid, struct ASTNode* right, uint64_t intval);
-struct ASTNode* mkastleaf(AST_OP op, int intval);
+struct ASTNode* mkastleaf(AST_OP op, PTYPE type, int intval);
 struct ASTNode* mkastunary(AST_OP op, struct ASTNode* left, int intval);
+
 AST_OP arithop(TOKEN_TYPE tok_type);
 void ast_destroy(void);
 
